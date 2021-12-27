@@ -1,0 +1,144 @@
+####
+# Ignore tests tmp files and results
+tests/runtest
+tests/**/*.gcda
+tests/**/*.gcno
+
+####
+# Ignore CVS related files
+
+.CVS
+CVS
+
+####
+# Linux  Ignored binary and build folder
+*.o
+*.so
+mac/ccextractor
+linux/ccextractor
+linux/depend
+windows/Debug/**
+windows/Debug-OCR/**
+windows/Release/**
+windows/Release-Full/**
+windows/Release-OCR/**
+windows/Debug-Full/**
+windows/x64/**
+windows/ccextractor.VC.db
+build/
+
+####
+# Python
+*.pyc
+
+####
+# Visual Studio project Ignored files
+
+.vs/**
+windows/.vs/**
+!windows/.vs/config/applicationhost.config
+*.suo
+*.sdf
+*.opensdf
+*.user
+*.opendb
+*.db
+*.vscode
+
+####
+# Ignore the header file that is updated upon build
+src/lib_ccx/compile_info_real.h
+
+#### Ignore windows OCR libraries and folders
+windows/libs/leptonica/**
+windows/libs/tesseract/**
+
+# Ctags
+*.tags*
+tags
+
+# Vagrant
+.vagrant/
+
+# Eclipse stuff
+.cproject
+.project
+.settings/
+
+# Mac
+.DS_Store
+windows/enc_temp_folder/*
+
+#CMake
+src/cmake-build-debug/
+src/.idea/
+
+
+#Autotools
+linux/config.h
+linux/config.log
+linux/config.status
+linux/Makefile
+linux/autom4te.cache
+linux/aclocal.m4
+linux/*.in
+linux/configure
+linux/build-conf/
+mac/config.h
+mac/config.log
+mac/config.status
+mac/Makefile
+mac/autom4te.cache
+mac/aclocal.m4
+mac/*.in
+mac/configure
+mac/build-conf/
+package_creators/*tar.gz
+package_creators/build/*.deb
+src/.deps/
+src/.dirstamp
+src/gpacmp4/.deps/
+src/gpacmp4/.dirstamp
+src/lib_ccx/.deps/
+src/lib_ccx/.dirstamp
+src/lib_hash/.deps/
+src/lib_hash/.dirstamp
+src/libpng/.deps/
+src/libpng/.dirstamp
+src/protobuf-c/.deps/
+src/protobuf-c/.dirstamp
+src/utf8proc/.deps/
+src/utf8proc/.dirstamp
+src/zlib/.deps/
+src/zlib/.dirstamp
+src/zvbi/.deps/
+src/zvbi/.dirstamp
+
+# Arch
+package_creators/*.pkg.tar.xz
+
+#RPMs
+package_creators/*.rpm
+src/lib_ccx/ccx.pc
+windows/combase.pdb/
+src/**/.deps
+src/**/.dirstamp
+mac/ccextractorGUI
+linux/ccextractorGUI
+linux/ccxGUI.ini
+linux/CMakeCache.txt
+linux/CMakeFiles/
+linux/cmake_install.cmake
+linux/install_manifest.txt
+linux/lib_ccx/
+mac/lib_ccx/
+mac/install_manifest.txt
+mac/cmake_install.cmake
+mac/CMakeFiles/
+mac/CMakeCache.txt
+*.py.bak
+
+# Bazel
+bazel*
+
+WILDER_S3E1_GER.mp4
