@@ -443,9 +443,9 @@ typedef struct ccx_stream_mp4_box
 } ccx_stream_mp4_box;
 
 /* The box types below are taken from table 1 from ISO/IEC 14496-12_2012 (page 12 and further).
-* An asterisk (*) marks a mandatory box for a regular file.
-* Box types that are on the second level or deeper are omitted.
-*/
+ * An asterisk (*) marks a mandatory box for a regular file.
+ * Box types that are on the second level or deeper are omitted.
+ */
 ccx_stream_mp4_box ccx_stream_mp4_boxes[16] = {
     {"ftyp", 6}, // File type and compatibility*
     {"pdin", 1}, // Progressive download information
@@ -482,6 +482,11 @@ int isValidMP4Box(unsigned char *buffer, size_t position, size_t *nextBoxLocatio
 		    buffer[position + 6] == ccx_stream_mp4_boxes[idx].boxType[2] && buffer[position + 7] == ccx_stream_mp4_boxes[idx].boxType[3])
 		{
 			mprint("Detected MP4 box with name: %s\n", ccx_stream_mp4_boxes[idx].boxType);
+			// If the box type is "moov", check if it contains a valid movie header
+			if (idx == 2 && !(buffer[position + 12] == 'm' && buffer[position + 13] == 'v' && buffer[position + 14] == 'h' && buffer[position + 15] == 'd'))
+			{
+				continue;
+			}
 			// Box name matches. Do crude validation of possible box size, and if valid, add points for "valid" box
 			size_t boxSize = buffer[position] << 24;
 			boxSize |= buffer[position + 1] << 16;

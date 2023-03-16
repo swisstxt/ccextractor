@@ -41,7 +41,7 @@ void init_options(struct ccx_s_options *options)
 	options->live_stream = 0;     // 0 -> A regular file
 	options->messages_target = 1; // 1=stdout
 	options->print_file_reports = 0;
-	options->no_timestamp_map = 0; // Enable timestamps by default
+	options->timestamp_map = 0; // Disable X-TIMESTAMP-MAP header by default
 
 	/* Levenshtein's parameters, for string comparison */
 	options->dolevdist = 1;		  // By default attempt to correct typos
@@ -65,7 +65,7 @@ void init_options(struct ccx_s_options *options)
 	options->xmltvonlycurrent = 0;	  // 0 off 1 on
 	options->keep_output_closed = 0;  // By default just keep the file open.
 	options->force_flush = 0;	  // Don't flush whenever content is written.
-	options->append_mode = 0;	  //By default, files are overwritten.
+	options->append_mode = 0;	  // By default, files are overwritten.
 	options->ucla = 0;		  // By default, -UCLA not used
 	options->tickertext = 0;	  // By default, do not assume ticker style text
 	options->hardsubx = 0;		  // By default, don't try to extract hard subtitles
@@ -85,6 +85,7 @@ void init_options(struct ccx_s_options *options)
 	options->hardsubx_conf_thresh = 0.0;
 	options->hardsubx_hue = 0.0;
 	options->hardsubx_lum_thresh = 95.0;
+	options->hardsubx_and_common = 0;
 
 	options->transcript_settings = ccx_encoders_default_transcript_settings;
 	options->millis_separator = ',';
@@ -155,7 +156,7 @@ void init_options(struct ccx_s_options *options)
 	options->translate_enabled = 0;
 	options->translate_key = NULL;
 	options->translate_langs = NULL;
-#endif //ENABLE_SHARING
+#endif // ENABLE_SHARING
 #ifdef WITH_LIBCURL
 	options->curlposturl = NULL;
 #endif

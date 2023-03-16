@@ -790,7 +790,7 @@ void parse_segment_track_entry(struct matroska_ctx *mkv_ctx)
 				codec_id_string = read_vint_block_string(file);
 				codec_id = get_track_subtitle_codec_id(codec_id_string);
 				mprint("    Codec ID: %s\n", codec_id_string);
-				//We only support AVC by now for EIA-608
+				// We only support AVC by now for EIA-608
 				if (strcmp((const char *)codec_id_string, (const char *)avc_codec_id) == 0)
 					mkv_ctx->avc_track_number = track_number;
 				MATROSKA_SWITCH_BREAK(code, code_len);
@@ -1029,7 +1029,7 @@ void parse_segment(struct matroska_ctx *mkv_ctx)
 				parse_segment_info(file);
 				MATROSKA_SWITCH_BREAK(code, code_len);
 			case MATROSKA_SEGMENT_CLUSTER:
-				//read_vint_block_skip(file);
+				// read_vint_block_skip(file);
 				parse_segment_cluster(mkv_ctx);
 				MATROSKA_SWITCH_BREAK(code, code_len);
 			case MATROSKA_SEGMENT_TRACKS:
@@ -1099,18 +1099,32 @@ char *ass_ssa_sentence_erase_read_order(char *text)
 
 void save_sub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *track)
 {
-	char *filename = generate_filename_from_track(mkv_ctx, track);
-	mprint("\nOutput file: %s", filename);
+	char *filename;
 	int desc;
+
+	if (mkv_ctx->ctx->cc_to_stdout == CCX_TRUE)
+	{
+		desc = 1; // file descriptor of stdout
+	}
+	else
+	{
+		filename = generate_filename_from_track(mkv_ctx, track);
+		mprint("\nOutput file: %s", filename);
 #ifdef WIN32
-	desc = open(filename, O_WRONLY | O_CREAT | O_TRUNC | O_APPEND, S_IREAD | S_IWRITE);
+		desc = open(filename, O_WRONLY | O_CREAT | O_TRUNC | O_APPEND, S_IREAD | S_IWRITE);
 #else
-	desc = open(filename, O_WRONLY | O_CREAT | O_TRUNC | O_APPEND, S_IWUSR | S_IRUSR);
+		desc = open(filename, O_WRONLY | O_CREAT | O_TRUNC | O_APPEND, S_IWUSR | S_IRUSR);
 #endif
-	free(filename);
+		free(filename);
+	}
 
 	if (track->header != NULL)
 		write_wrapped(desc, track->header, strlen(track->header));
+
+	if (track->codec_id == MATROSKA_TRACK_SUBTITLE_CODEC_ID_VOBSUB)
+	{
+		mprint("\nError: VOBSUB not supported");
+	}
 
 	for (int i = 0; i < track->sentence_count; i++)
 	{
@@ -1148,7 +1162,7 @@ void save_sub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *tra
 			}
 
 			// writing cue
-			char *timestamp_start = malloc(sizeof(char) * 80); //being generous
+			char *timestamp_start = malloc(sizeof(char) * 80); // being generous
 			timestamp_to_vtttime(sentence->time_start, timestamp_start);
 			ULLONG time_end = sentence->time_end;
 			if (i + 1 < track->sentence_count)
@@ -1183,7 +1197,7 @@ void save_sub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *tra
 		{
 			char number[9];
 			sprintf(number, "%d", i + 1);
-			char *timestamp_start = malloc(sizeof(char) * 80); //being generous
+			char *timestamp_start = malloc(sizeof(char) * 80); // being generous
 			timestamp_to_srttime(sentence->time_start, timestamp_start);
 			ULLONG time_end = sentence->time_end;
 			if (i + 1 < track->sentence_count)
@@ -1236,6 +1250,10 @@ void save_sub_track(struct matroska_ctx *mkv_ctx, struct matroska_sub_track *tra
 			free(timestamp_start);
 			free(timestamp_end);
 		}
+		else if (track->codec_id == MATROSKA_TRACK_SUBTITLE_CODEC_ID_VOBSUB)
+		{
+			// TODO: Add support for VOBSUB
+		}
 	}
 }
 
@@ -1270,7 +1288,7 @@ void matroska_save_all(struct matroska_ctx *mkv_ctx, char *lang)
 			save_sub_track(mkv_ctx, mkv_ctx->sub_tracks[i]);
 	}
 
-	//EIA-608
+	// EIA-608
 	update_decoder_list(mkv_ctx->ctx);
 	if (mkv_ctx->dec_sub.got_output)
 	{
@@ -1360,7 +1378,7 @@ int matroska_loop(struct lib_ccx_ctx *ctx)
 	mkv_ctx->filename = ctx->inputfile[ctx->current_file];
 	mkv_ctx->file = create_file(ctx);
 	mkv_ctx->sub_tracks = malloc(sizeof(struct matroska_sub_track **));
-	//EIA-608
+	// EIA-608
 	memset(&mkv_ctx->dec_sub, 0, sizeof(mkv_ctx->dec_sub));
 	mkv_ctx->avc_track_number = -1;
 

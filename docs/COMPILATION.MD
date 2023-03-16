@@ -6,7 +6,7 @@ Downloads for precompiled binaries and source code can be found [on our website]
 
 Clone the latest repository from Github
 
-```
+```bash
 git clone https://github.com/CCExtractor/ccextractor.git
 ```
 
@@ -25,7 +25,13 @@ RHEL:
 ```bash
 yum install -y glew-devel glfw-devel cmake gcc libcurl-devel tesseract-devel leptonica-devel clang
 ```
-Rust 1.54 or above is also required.[Install Rust](https://www.rust-lang.org/tools/install). Check specific compilation methods below, on how to compile without rust
+
+Arch:
+```bash
+sudo paru -S glew glfw curl tesseract leptonica cmake gcc clang
+```
+
+Rust 1.54 or above is also required. [Install Rust](https://www.rust-lang.org/tools/install). Check specific compilation methods below, on how to compile without rust.
 
 **Note:** On Ubuntu Version 18.04 (Bionic) and later, `libtesseract-dev` is installed rather than `tesseract-ocr-dev`, which does not exist anymore.
 
@@ -34,10 +40,11 @@ Rust 1.54 or above is also required.[Install Rust](https://www.rust-lang.org/too
 2. Compiling
 
 ### Using the build script
+
 By default build script does not include debugging information hence, you cannot debug the executable produced (i.e. `./ccextractor`) on a debugger. To include debugging information, use the `builddebug` script.
 
 ```bash
-#Navigate to linux directory and call the build script
+# navigate to linux directory and call the build script
 
 cd ccextractor/linux
 
@@ -48,7 +55,13 @@ cd ccextractor/linux
 ./build -without-rust
 
 # compile with debug info
-./builddebug
+./build -debug            # same as ./build_debug
+
+# compile with hardsubx
+./build -hardsubx         # same as ./build_hardsubx
+
+# compile in debug mode without rust
+./build -debug -without-rust
 
 # test your build
 ./ccextractor
@@ -57,10 +70,10 @@ cd ccextractor/linux
 ### Standard linux compilation through Autoconf scripts
 
 ```bash
-sudo apt-get install autoconf      #Dependency to generate configuration script
+sudo apt-get install autoconf  # dependency to generate configuration script
 cd ccextractor/linux
 ./autogen.sh
-./configure # OR ./configure --without-rust
+./configure                    # OR ./configure --without-rust
 make
 
 # test your build
@@ -73,12 +86,12 @@ sudo make install
 ### Using CMake
 
 ```bash
-#Create and navigate to directory where you want to store built files
+# create and navigate to directory where you want to store built files
 cd ccextractor/
 mkdir build
 cd build
 
-#Generate makefile using cmake and then compile
+# generate makefile using cmake and then compile
 cmake ../src/  # options here
 make
 
@@ -94,22 +107,9 @@ sudo make install
      `-DWITHOUT_RUST=ON` to disable rust.
      `-DWITH_HARDSUBX=ON` to enable burned-in subtitles
 
-### Compiling with GUI:
+### Compiling with GUI
 
-To build CCExtractor with a GUI, you will additionally need to install [GLEW](http://glew.sourceforge.net/build.html) and [GLFW](http://www.glfw.org/docs/latest/compile.html)
-
-In order to compile it, you'll need to configure it using autoconf by passing the `-with-gui` option.
-
-```bash
-./autogen.sh
-./configure --with-gui
-make
-
-# make build systemwide
-sudo make install
-```
-
-Once set up you can run the GUI interface from the terminal `./ccextractorGUI`
+The GUI for CCExtractor has been moved to a separate repository ([https://github.com/CCExtractor/ccextractorfluttergui](https://github.com/CCExtractor/ccextractorfluttergui)).
 
 ## macOS
 
@@ -146,12 +146,12 @@ cd ccextractor/mac
 #### Using CMake
 
 ```bash
-#Create and navigate to directory where you want to store built files
+# create and navigate to directory where you want to store built files
 cd ccextractor/
 mkdir build
 cd build
 
-#Generate makefile using cmake and then compile
+# generate makefile using cmake and then compile
 cmake ../src/  # options here
 make
 
@@ -169,7 +169,7 @@ make
 ```bash
 cd ccextractor/mac
 ./autogen.sh
-./configure   # OR ./configure --without-rust
+./configure         # OR ./configure --without-rust
 make
 
 # test your build
@@ -178,25 +178,30 @@ make
 
 #### Compiling with GUI:
 
-To use CCExtractor with a gui you will additionally need to install GLEW and GLFW. You can do that by installing it via homebrew using:
-
-```bash
-brew install glfw
-brew install glew
-```
-
-In order to compile it, you'll need to configure it using autoconf by passing the `-with-gui` option.
-
-```bash
-./autogen.sh
-./configure --with-gui #OR .configure --with-gui --without-rust
-make
-```
-
-Once set up, you can run the GUI interface from the terminal `./ccextractorGUI`
+The GUI for CCExtractor has been moved to a separate repository ([https://github.com/CCExtractor/ccextractorfluttergui](https://github.com/CCExtractor/ccextractorfluttergui)).
 
 ## Windows
 Dependencies are clang and rust. To enable OCR, rust i686-pc-windows-msvc target should be installed 
+
+Other dependencies are required through vcpkg, so you can follow below steps:
+1. Download vcpkg (prefer version `2023.02.24` as it is supported)
+2. Integrate vcpkg into your system, run the below command in the downloaded vcpkg folder:
+```
+vcpkg integrate install
+```
+3. Set Environment Variable for Vcpkg triplet, you can choose between x86 or x64 based on your system.
+```
+setx VCPKG_DEFAULT_TRIPLET "x64-windows-static-md"
+```
+3. Install dependencies from vcpkg
+if building Debug-Full, Release-Full (HardSubx)
+```
+vcpkg install ffmpeg leptonica tesseract
+```
+otherwise if you have Debug, Release
+```
+vcpkg install libpng
+```
 
 Note: Following screenshots and steps are based on Visual Studio 2017, but they should be more or less same for other versions.
 

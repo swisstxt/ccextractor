@@ -4,17 +4,14 @@
 #include "ocr.h"
 #include "utility.h"
 
-//TODO: Correct FFMpeg integration
+// TODO: Correct FFMpeg integration
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libavutil/imgutils.h>
 #include <libswscale/swscale.h>
 
-int hardsubx_process_data(struct lib_hardsubx_ctx *ctx)
+int hardsubx_process_data(struct lib_hardsubx_ctx *ctx, struct lib_ccx_ctx *ctx_normal)
 {
-	// Get the required media attributes and initialize structures
-	av_register_all();
-
 	if (avformat_open_input(&ctx->format_ctx, ctx->inputfile[0], NULL, NULL) != 0)
 	{
 		fatal(EXIT_READ_ERROR, "Error reading input file!\n");
@@ -32,7 +29,7 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx)
 	ctx->video_stream_id = -1;
 	for (int i = 0; i < ctx->format_ctx->nb_streams; i++)
 	{
-		if (ctx->format_ctx->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO)
+		if (ctx->format_ctx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO)
 		{
 			ctx->video_stream_id = i;
 			break;
@@ -43,8 +40,20 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx)
 		fatal(EXIT_READ_ERROR, "Video Stream not found!\n");
 	}
 
-	ctx->codec_ctx = ctx->format_ctx->streams[ctx->video_stream_id]->codec;
-	ctx->codec = avcodec_find_decoder(ctx->codec_ctx->codec_id);
+	ctx->codec_ctx = avcodec_alloc_context3(NULL);
+	if (!ctx->codec_ctx)
+	{
+		fatal(EXIT_NOT_ENOUGH_MEMORY, "Could not allocate codec context!\n");
+	}
+
+	// Assign codec parameters to codec context
+	if (avcodec_parameters_to_context(ctx->codec_ctx, ctx->format_ctx->streams[ctx->video_stream_id]->codecpar) < 0)
+	{
+		fatal(EXIT_READ_ERROR, "Could not initialize codec context!\n");
+	}
+
+	// Find decoder for the codec context
+	ctx->codec = (AVCodec *)avcodec_find_decoder(ctx->codec_ctx->codec_id);
 	if (ctx->codec == NULL)
 	{
 		fatal(EXIT_READ_ERROR, "Input codec is not supported!\n");
@@ -101,10 +110,14 @@ int hardsubx_process_data(struct lib_hardsubx_ctx *ctx)
 
 	if (ctx->tickertext)
 		hardsubx_process_frames_tickertext(ctx, enc_ctx);
+	else if (ctx->hardsubx_and_common)
+	{
+		process_hardsubx_linear_frames_and_normal_subs(ctx, enc_ctx, ctx_normal);
+	}
 	else
 		hardsubx_process_frames_linear(ctx, enc_ctx);
 
-	dinit_encoder(&enc_ctx, 0); //TODO: Replace 0 with end timestamp
+	dinit_encoder(&enc_ctx, 0); // TODO: Replace 0 with end timestamp
 
 	// Free the allocated memory for frame processing
 	av_free(ctx->rgb_buffer);
@@ -221,7 +234,7 @@ struct lib_hardsubx_ctx *_init_hardsubx(struct ccx_s_options *options)
 	char *pars_values = strdup("/dev/null");
 	char *tessdata_path = NULL;
 
-	char *lang = options->ocrlang;
+	char *lang = (char *)options->ocrlang;
 	if (!lang)
 		lang = "eng"; // English is default language
 
@@ -245,7 +258,7 @@ struct lib_hardsubx_ctx *_init_hardsubx(struct ccx_s_options *options)
 
 	int ret = -1;
 
-	if (!strncmp("4.", TessVersion(), 2))
+	if (!strncmp("4.", TessVersion(), 2) || !strncmp("5.", TessVersion(), 2))
 	{
 		char tess_path[1024];
 		if (ccx_options.ocr_oem < 0)
@@ -269,8 +282,8 @@ struct lib_hardsubx_ctx *_init_hardsubx(struct ccx_s_options *options)
 		fatal(EXIT_NOT_ENOUGH_MEMORY, "Not enough memory to initialize Tesseract");
 	}
 
-	//Initialize attributes common to lib_ccx context
-	ctx->basefilename = get_basename(options->output_filename); //TODO: Check validity, add stdin, network
+	// Initialize attributes common to lib_ccx context
+	ctx->basefilename = get_basename(options->output_filename); // TODO: Check validity, add stdin, network
 	ctx->current_file = -1;
 	ctx->inputfile = options->inputfile;
 	ctx->num_input_files = options->num_input_files;
@@ -279,7 +292,7 @@ struct lib_hardsubx_ctx *_init_hardsubx(struct ccx_s_options *options)
 	ctx->subs_delay = options->subs_delay;
 	ctx->cc_to_stdout = options->cc_to_stdout;
 
-	//Initialize subtitle text parameters
+	// Initialize subtitle text parameters
 	ctx->tickertext = options->tickertext;
 	ctx->cur_conf = 0.0;
 	ctx->prev_conf = 0.0;
@@ -290,8 +303,9 @@ struct lib_hardsubx_ctx *_init_hardsubx(struct ccx_s_options *options)
 	ctx->conf_thresh = options->hardsubx_conf_thresh;
 	ctx->hue = options->hardsubx_hue;
 	ctx->lum_thresh = options->hardsubx_lum_thresh;
+	ctx->hardsubx_and_common = options->hardsubx_and_common;
 
-	//Initialize subtitle structure memory
+	// Initialize subtitle structure memory
 	ctx->dec_sub = (struct cc_subtitle *)malloc(sizeof(struct cc_subtitle));
 	memset(ctx->dec_sub, 0, sizeof(struct cc_subtitle));
 
@@ -307,12 +321,12 @@ void _dinit_hardsubx(struct lib_hardsubx_ctx **ctx)
 	TessBaseAPIEnd(lctx->tess_handle);
 	TessBaseAPIDelete(lctx->tess_handle);
 
-	//Free subtitle
+	// Free subtitle
 	freep(lctx->dec_sub);
 	freep(ctx);
 }
 
-void hardsubx(struct ccx_s_options *options)
+void hardsubx(struct ccx_s_options *options, struct lib_ccx_ctx *ctx_normal)
 {
 	// This is similar to the 'main' function in ccextractor.c, but for hard subs
 	mprint("HardsubX (Hard Subtitle Extractor) - Burned-in subtitle extraction subsystem\n");
@@ -329,7 +343,7 @@ void hardsubx(struct ccx_s_options *options)
 	// Data processing loop
 	time_t start, end;
 	time(&start);
-	hardsubx_process_data(ctx);
+	hardsubx_process_data(ctx, ctx_normal);
 
 	// Show statistics (time taken, frames processed, mode etc)
 	time(&end);

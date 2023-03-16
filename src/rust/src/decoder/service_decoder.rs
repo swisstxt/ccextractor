@@ -36,7 +36,7 @@ impl dtvcc_service_decoder {
     ) {
         let mut i = 0;
         while i < block.len() {
-            let consumed = if block[i] != DTVCC_COMMANDS_C0_CODES_DTVCC_C0_EXT1 as u8 {
+            let consumed = if block[i] != DTVCC_COMMANDS_C0_CODES_DTVCC_C0_EXT1 {
                 let used = match block[i] {
                     0..=0x1F => self.handle_C0(&block[i..], encoder, timing, no_rollup),
                     0x20..=0x7F => self.handle_G0(&block[i..]),
@@ -272,7 +272,6 @@ impl dtvcc_service_decoder {
         timing: &mut ccx_common_timing_ctx,
     ) -> i32 {
         let code = block[0];
-        let next_code = block[1];
         let C1Command {
             command,
             length,
@@ -296,12 +295,12 @@ impl dtvcc_service_decoder {
             | C1CodeSet::CW7 => {
                 self.handle_set_current_window(code - DTVCC_COMMANDS_C1_CODES_DTVCC_C1_CW0 as u8)
             }
-            C1CodeSet::CLW => self.handle_clear_windows(next_code, encoder, timing),
-            C1CodeSet::HDW => self.handle_hide_windows(next_code, encoder, timing),
-            C1CodeSet::TGW => self.handle_toggle_windows(next_code, encoder, timing),
-            C1CodeSet::DLW => self.handle_delete_windows(next_code, encoder, timing),
-            C1CodeSet::DSW => self.handle_display_windows(next_code, timing),
-            C1CodeSet::DLY => self.handle_delay(next_code),
+            C1CodeSet::CLW => self.handle_clear_windows(block[1], encoder, timing),
+            C1CodeSet::HDW => self.handle_hide_windows(block[1], encoder, timing),
+            C1CodeSet::TGW => self.handle_toggle_windows(block[1], encoder, timing),
+            C1CodeSet::DLW => self.handle_delete_windows(block[1], encoder, timing),
+            C1CodeSet::DSW => self.handle_display_windows(block[1], timing),
+            C1CodeSet::DLY => self.handle_delay(block[1]),
             C1CodeSet::DLC => self.handle_delay_cancel(),
             C1CodeSet::RST => self.handle_reset(),
             C1CodeSet::SPA => self.handle_set_pen_attributes(&block[1..]),

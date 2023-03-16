@@ -1,4 +1,4 @@
-#include "png.h"
+#include <png.h>
 #include "protobuf-c.h"
 #include "zlib.h"
 #include "gpac/version.h"
@@ -128,7 +128,7 @@ int parsedelay(struct ccx_s_options *opt, char *par)
 
 int append_file_to_queue(struct ccx_s_options *opt, char *filename)
 {
-	if (filename[0] == '\0') //skip files with empty file name (ex : ./ccextractor "")
+	if (filename[0] == '\0') // skip files with empty file name (ex : ./ccextractor "")
 		return 0;
 	char *c = (char *)malloc(strlen(filename) + 1);
 	if (c == NULL)
@@ -568,7 +568,7 @@ void print_usage(void)
 	mprint("                       less or equal than the max allowed..\n");
 	mprint("-anvid --analyzevideo  Analyze the video stream even if it's not used for\n");
 	mprint("                       subtitles. This allows to provide video information.\n");
-	mprint("  --no-timestamp-map   Use this flag to disable the X-TIMESTAMP-MAP header for WebVTT\n");
+	mprint("  --timestamp-map      Enable the X-TIMESTAMP-MAP header for WebVTT (HLS)\n");
 	mprint("Levenshtein distance:\n\n");
 	mprint("  When processing teletext files CCExtractor tries to correct typos by\n");
 	mprint("  comparing consecutive lines. If line N+1 is almost identical to line N except\n");
@@ -841,7 +841,7 @@ void print_usage(void)
 	mprint("                       to find data in all packets by scanning.\n");
 #ifdef ENABLE_SHARING
 	mprint("       -sharing-debug: Print extracted CC sharing service messages\n");
-#endif //ENABLE_SHARING
+#endif // ENABLE_SHARING
 	mprint("\n");
 
 	mprint("Teletext related options:\n");
@@ -903,7 +903,7 @@ void print_usage(void)
 	mprint("                       in csv format (e.g. -translate ru,fr,it\n");
 	mprint("      -translate-auth: Set Translation Service authorization data to make translation possible\n");
 	mprint("                       In case of Google Translate API - API Key\n");
-#endif //ENABLE_SHARING
+#endif // ENABLE_SHARING
 
 	mprint("Notes on the CEA-708 decoder: While it is starting to be useful, it's\n");
 	mprint("a work in progress. A number of things don't work yet in the decoder\n");
@@ -983,6 +983,8 @@ void print_usage(void)
 	mprint("                     Recommended values are in the range 80 to 100.\n");
 	mprint("                     The default value is 95\n");
 	mprint("\n");
+	mprint("		-hcc	   : This option will be used if the file should have both\n");
+	mprint("					 closed captions and burned in subtitles\n");
 	mprint("            An example command for burned-in subtitle extraction is as follows:\n");
 	mprint("               ccextractor video.mp4 -hardsubx -subcolor white -detect_italics \n");
 	mprint("                   -whiteness_thresh 90 -conf_thresh 60\n");
@@ -997,7 +999,7 @@ char *calculateSHA256(char *location)
 	int size_read, bytes_read, fh = 0;
 	SHA256_CTX ctx256;
 
-	SHA256_Init(&ctx256);
+	CC_SHA256_Init(&ctx256);
 
 #ifdef _WIN32
 	fh = OPEN(location, O_RDONLY | O_BINARY);
@@ -1013,7 +1015,7 @@ char *calculateSHA256(char *location)
 	while ((bytes_read = read(fh, sha256_buf, 16384)) > 0)
 	{
 		size_read += bytes_read;
-		SHA256_Update(&ctx256, (unsigned char *)sha256_buf, bytes_read);
+		CC_SHA256_Update(&ctx256, (unsigned char *)sha256_buf, bytes_read);
 	}
 	close(fh);
 	SHA256_End(&ctx256, sha256_buf);
@@ -1040,7 +1042,7 @@ void version(char *location)
 	char *leptversion = getLeptonicaVersion();
 	mprint("	Leptonica Version: %s\n", leptversion);
 	lept_free(leptversion);
-#endif //ENABLE_OCR
+#endif // ENABLE_OCR
 	mprint("	libGPAC Version: %s\n", GPAC_VERSION);
 	mprint("	zlib: %s\n", ZLIB_VERSION);
 	mprint("	utf8proc Version: %s\n", (const char *)utf8proc_version());
@@ -1193,7 +1195,7 @@ void mkvlang_params_check(char *lang)
 		}
 	}
 
-	//Steps to check for the last lang of multiple mkvlangs provided by the user.
+	// Steps to check for the last lang of multiple mkvlangs provided by the user.
 	present = strlen(lang) - 1;
 
 	for (int char_index = strlen(lang) - 1; char_index >= 0; char_index--)
@@ -1273,6 +1275,12 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 		}
 		if (opt->hardsubx == 1)
 		{
+			if (strcmp(argv[i], "-hcc") == 0)
+			{
+				// if extraction of both burned in and non burned in subs
+				opt->hardsubx_and_common = 1;
+				continue;
+			}
 			if (strcmp(argv[i], "-ocr_mode") == 0)
 			{
 				if (i < argc - 1)
@@ -1520,9 +1528,9 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 			continue;
 		}
 
-		if (strcmp(argv[i], "--no-timestamp-map") == 0 || strcmp(argv[i], "-ntm") == 0)
+		if (strcmp(argv[i], "--timestamp-map") == 0 || strcmp(argv[i], "-tm") == 0)
 		{
-			opt->no_timestamp_map = 1;
+			opt->timestamp_map = 1;
 			continue;
 		}
 
@@ -2265,7 +2273,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 			opt->debug_mask |= CCX_DMT_SHARE;
 			continue;
 		}
-#endif //ENABLE_SHARING
+#endif // ENABLE_SHARING
 		if (strcmp(argv[i], "-fullbin") == 0)
 		{
 			opt->fullbin = 1;
@@ -2761,7 +2769,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 				fatal(EXIT_MALFORMED_PARAMETER, "-curlposturl has no argument.\n");
 			}
 		}
-#endif //WITH_LIBCURL
+#endif // WITH_LIBCURL
 
 #ifdef ENABLE_SHARING
 		if (strcmp(argv[i], "-enable-sharing") == 0)
@@ -2810,7 +2818,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 				fatal(EXIT_MALFORMED_PARAMETER, "-translate-auth has no argument.\n");
 			}
 		}
-#endif //ENABLE_SHARING
+#endif // ENABLE_SHARING
 
 		fatal(EXIT_INCOMPATIBLE_PARAMETERS, "Error: Parameter %s not understood.\n", argv[i]);
 	}
@@ -2939,7 +2947,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 		print_error(opt->gui_mode_reports, "-curlposturl requires that the format is curl\n");
 		return EXIT_INCOMPATIBLE_PARAMETERS;
 	}
-#endif //WITH_LIBCURL
+#endif // WITH_LIBCURL
 	/* Initialize some Encoder Configuration */
 	opt->enc_cfg.extract = opt->extract;
 	if (opt->num_input_files > 0)

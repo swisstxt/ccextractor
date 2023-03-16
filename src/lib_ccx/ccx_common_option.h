@@ -37,7 +37,6 @@ struct encoder_cfg
 	int force_flush;                     // Force flush on content write
 	int append_mode;                     // Append mode for output files
 	int ucla;                            // 1 if -UCLA used, 0 if not
-	int no_timestamp_map;				 // 1 if timestamps disabled for WebVTT
 
 	enum ccx_encoding_type encoding;
 	enum ccx_output_date_format date_format;
@@ -118,7 +117,7 @@ struct ccx_s_options // Options from user parameters
                                          >0 -> Live stream with a timeout of this value in seconds */
 	char *filter_profanity_file;         // Extra profanity word file
 	int messages_target;              // 0 = nowhere (quiet), 1=stdout, 2=stderr
-	int no_timestamp_map;             // 1 for no timestamps for WebVTT, 0 for the timestamp header
+	int timestamp_map;                // If 1, add WebVTT X-TIMESTAMP-MAP header
 	/* Levenshtein's parameters, for string comparison */
 	int dolevdist;					  // 0 => don't attempt to correct typos with this algorithm
 	int levdistmincnt, levdistmaxpct; // Means 2 fails or less is "the same", 10% or less is also "the same"
@@ -144,6 +143,7 @@ struct ccx_s_options // Options from user parameters
 	int ucla;                         // 1 if UCLA used, 0 if not
 	int tickertext;                   // 1 if ticker text style burned in subs, 0 if not
 	int hardsubx;                     // 1 if burned-in subtitles to be extracted
+	int hardsubx_and_common;		  // 1 if both burned-in and not burned in need to be extracted
 	char *dvblang;                    // The name of the language stream for DVB
 	const char *ocrlang;              // The name of the .traineddata file to be loaded with tesseract
 	int ocr_oem;                      // The Tesseract OEM mode, could be 0 (default), 1 or 2

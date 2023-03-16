@@ -1,6 +1,7 @@
 name: Build CCExtractor on Linux
 
 on:
+  workflow_dispatch:
   push:
     paths:
     - '.github/workflows/build_linux.yml'
@@ -10,8 +11,6 @@ on:
     - 'linux/**'
     - 'package_creators/**'
     - 'src/rust/**'
-    tags-ignore: # ignore push via new tag
-    - '*.*'
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
@@ -28,7 +27,7 @@ jobs:
     steps:
     - name: Install tesseract
       run: sudo apt-get install libtesseract-dev
-    - uses: actions/checkout@v2.4.0
+    - uses: actions/checkout@v3
     - name: build
       run: ./build
       working-directory: ./linux
@@ -39,14 +38,14 @@ jobs:
       run: mkdir ./linux/artifacts
     - name: Copy release artifact
       run: cp ./linux/ccextractor ./linux/artifacts/
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         name: CCExtractor Linux build
         path: ./linux/artifacts
   build_autoconf:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2.4.0
+    - uses: actions/checkout@v3
     - name: run autogen
       run: ./autogen.sh
       working-directory: ./linux
@@ -62,7 +61,7 @@ jobs:
   cmake:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2.4.0
+    - uses: actions/checkout@v3
     - name: cmake
       run: mkdir build && cd build && cmake ../src
     - name: build
@@ -73,22 +72,27 @@ jobs:
   cmake_ocr_hardsubx:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2.4.0
+    - uses: actions/checkout@v3
     - name: dependencies
-      run: sudo apt update && sudo apt install libtesseract-dev libavformat-dev libswscale-dev
+      run: sudo apt update && sudo apt install libtesseract-dev libavformat-dev libavdevice-dev libswscale-dev yasm
     - name: cmake
-      run: mkdir build && cd build && cmake -DWITH_OCR=ON -DWITH_HARDSUBX=ON ../src
+      run: |
+        mkdir build && cd build
+        cmake -DWITH_OCR=ON -DWITH_HARDSUBX=ON ../src
     - name: build
-      run: make -j$(nproc)
+      run: |
+        FFMPEG_INCLUDE_DIR=/usr/include/x86_64-linux-gnu \
+        FFMPEG_PKG_CONFIG_PATH=/usr/x86_64-linux-gnu/lib/pkgconfig \
+        make -j$(nproc)
       working-directory: build
     - name: Display version information
       run: ./build/ccextractor --version
   build_rust:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2.4.0
+      - uses: actions/checkout@v3
       - name: cache 
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             src/rust/.cargo/registry
