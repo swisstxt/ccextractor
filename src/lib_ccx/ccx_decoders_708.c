@@ -258,7 +258,7 @@ void dtvcc_window_apply_style(dtvcc_window *window, dtvcc_window_attribs *style)
 	window->attribs.word_wrap = style->word_wrap;
 }
 
-//#define DTVCC_PRINT_DEBUG
+// #define DTVCC_PRINT_DEBUG
 #ifdef DTVCC_PRINT_DEBUG
 
 int dtvcc_is_win_row_empty(dtvcc_window *window, int row_index)
@@ -1406,7 +1406,7 @@ int dtvcc_handle_G0(dtvcc_service_decoder *decoder, unsigned char *data, int dat
 	if (decoder->current_window == -1)
 	{
 		ccx_common_logging.log_ftn("[CEA-708] dtvcc_handle_G0: Window has to be defined first\n");
-		return data_length;
+		return 1;
 	}
 
 	unsigned char c = data[0];

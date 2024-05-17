@@ -1,70 +1,71 @@
-name: Build CCExtractor on Linux
+name: Build CCExtractor on Mac
 
 on:
   workflow_dispatch:
   push:
     paths:
-    - '.github/workflows/build_linux.yml'
+    - '.github/workflows/build_mac.yml'
     - '**.c'
     - '**.h'
     - '**Makefile**'
-    - 'linux/**'
+    - 'mac/**'
     - 'package_creators/**'
     - 'src/rust/**'
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
-    - '.github/workflows/build_linux.yml'
+    - '.github/workflows/build_mac.yml'
     - '**.c'
     - '**.h'
     - '**Makefile**'
-    - 'linux/**'
+    - 'mac/**'
     - 'package_creators/**'
     - 'src/rust/**'
 jobs:
   build_shell:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
     - name: Install dependencies
-      run: sudo apt update && sudo apt-get install libgpac-dev libtesseract-dev
+      run: brew install pkg-config autoconf automake libtool tesseract leptonica gpac
     - uses: actions/checkout@v4
     - name: build
-      run: ./build
-      working-directory: ./linux
+      run: ./build.command
+      working-directory: ./mac
     - name: Display version information
       run: ./ccextractor --version
-      working-directory: ./linux
+      working-directory: ./mac
     - name: Prepare artifacts
-      run: mkdir ./linux/artifacts
+      run: mkdir ./mac/artifacts
     - name: Copy release artifact
-      run: cp ./linux/ccextractor ./linux/artifacts/
+      run: cp ./mac/ccextractor ./mac/artifacts/
     - uses: actions/upload-artifact@v4
       with:
-        name: CCExtractor Linux build
-        path: ./linux/artifacts
+        name: CCExtractor mac build
+        path: ./mac/artifacts
   build_autoconf:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
-    - name: Install dependencies
-      run: sudo apt update && sudo apt-get install libgpac-dev
     - uses: actions/checkout@v4
+    - name: Install dependencies
+      run: brew install pkg-config autoconf automake libtool gpac
     - name: run autogen
       run: ./autogen.sh
-      working-directory: ./linux
+      working-directory: ./mac
     - name: configure
       run: ./configure --enable-debug
-      working-directory: ./linux
+      working-directory: ./mac
     - name: make
       run: make
-      working-directory: ./linux
+      working-directory: ./mac
     - name: Display version information
       run: ./ccextractor --version
-      working-directory: ./linux
+      working-directory: ./mac
   cmake:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
-    - name: Install dependencies
-      run: sudo apt update && sudo apt-get install libgpac-dev
+    - uses: actions/checkout@v4
+    - name: dependencies
+      run: brew install gpac
     - uses: actions/checkout@v4
     - name: cmake
       run: mkdir build && cd build && cmake ../src
@@ -74,11 +75,11 @@ jobs:
     - name: Display version information
       run: ./build/ccextractor --version
   cmake_ocr_hardsubx:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
     - uses: actions/checkout@v4
     - name: Install dependencies
-      run: sudo apt update && sudo apt install libgpac-dev libtesseract-dev libavformat-dev libavdevice-dev libswscale-dev yasm
+      run: brew install pkg-config autoconf automake libtool tesseract leptonica gpac ffmpeg
     - name: cmake
       run: |
         mkdir build && cd build
@@ -90,10 +91,8 @@ jobs:
     - name: Display version information
       run: ./build/ccextractor --version
   build_rust:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
-      - name: Install dependencies
-        run: sudo apt update && sudo apt-get install libgpac-dev
       - uses: actions/checkout@v4
       - name: cache 
         uses: actions/cache@v4

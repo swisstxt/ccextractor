@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ([2.69])
+AC_PREREQ([2.71])
 AC_INIT([CCExtractor], [0.94], [carlos@ccextractor.org])
 AC_CONFIG_AUX_DIR([build-conf])
 AC_CONFIG_SRCDIR([../src/ccextractor.c])
@@ -15,7 +15,7 @@ AC_PROG_MAKE_SET
 
 #Checks for "pkg-config" utility
 AC_MSG_CHECKING([pkg-config m4 macros])
-if test m4_ifdef([PKG_CHECK_MODULES], [yes], [no]) == yes; then
+if test m4_ifdef([PKG_CHECK_MODULES], [yes], [no]) = yes; then
 	AC_MSG_RESULT([yes]);
 else
 	AC_MSG_RESULT([no]);
@@ -63,7 +63,7 @@ AC_CHECK_FUNCS([floor ftruncate gethostbyname gettimeofday inet_ntoa mblen memch
 
 # Checks for arguments with configure
 AC_ARG_ENABLE([hardsubx],
-AC_HELP_STRING([--enable-hardsubx], [Enables extraction of burnt subtitles (hard subtitles)]),
+AS_HELP_STRING([--enable-hardsubx], [Enables extraction of burnt subtitles (hard subtitles)]),
 [case "${enableval}" in
   yes) hardsubx=true ;;
   no)  hardsubx=false ;;
@@ -71,7 +71,7 @@ AC_HELP_STRING([--enable-hardsubx], [Enables extraction of burnt subtitles (hard
 esac],[hardsubx=false])
 
 AC_ARG_ENABLE([ocr],
-AC_HELP_STRING([--enable-ocr], [Enables Optical Character Recognition]),
+AS_HELP_STRING([--enable-ocr], [Enables Optical Character Recognition]),
 [case "${enableval}" in
   yes) ocr=true ;;
   no)  ocr=false ;;
@@ -79,7 +79,7 @@ AC_HELP_STRING([--enable-ocr], [Enables Optical Character Recognition]),
 esac],[ocr=false])
 
 AC_ARG_ENABLE([ffmpeg],
-AC_HELP_STRING([--enable-ffmpeg], [Enable FFmpeg integration]),
+AS_HELP_STRING([--enable-ffmpeg], [Enable FFmpeg integration]),
 [case "${enableval}" in
   yes) ffmpeg=true ;;
   no)  ffmpeg=false ;;
@@ -88,7 +88,7 @@ esac],[ffmpeg=false])
 
 #Add argument for rust
 AC_ARG_WITH([rust],
-AC_HELP_STRING([--with-rust], [Builds CCExtractor with rust library]),
+AS_HELP_STRING([--with-rust], [Builds CCExtractor with rust library]),
 [with_rust=$withval],
 [with_rust=yes])
 
@@ -114,7 +114,7 @@ fi
 AM_CONDITIONAL([WITH_RUST], [test "x$with_rust" = "xyes"])
 
 AC_ARG_ENABLE(debug,
-              AC_HELP_STRING([--enable-debug],
+              AS_HELP_STRING([--enable-debug],
                              [Build Rust code with debugging information [default=no]]),
               [debug_release=$enableval],
               [debug_release=no])
@@ -140,21 +140,21 @@ AS_IF([ test x$hardsubx = xtrue && test $HAS_AVUTIL -gt 0 ], [AC_MSG_NOTICE(avut
 AS_IF([ test x$hardsubx = xtrue && test ! $HAS_AVUTIL -gt 0 ], [AC_MSG_ERROR(avutil library not found. Please install the avutil library before proceeding)])
 AS_IF([ test x$hardsubx = xtrue && test $HAS_SWSCALE -gt 0 ], [AC_MSG_NOTICE(swscale library found)])
 AS_IF([ test x$hardsubx = xtrue && test ! $HAS_SWSCALE -gt 0 ], [AC_MSG_ERROR(swscale library not found. Please install the swscale library before proceeding)])
-AS_IF([ (test x$ocr = xtrue || test x$hardsubx = xtrue) && test $HAS_TESSERACT -gt 0 ], [TESS_VERSION=`tesseract --version 2>&1 | grep tesseract` && AC_MSG_NOTICE(tesseract library found... $TESS_VERSION)])
+AS_IF([ (test x$ocr = xtrue || test x$hardsubx = xtrue) && test $HAS_TESSERACT -gt 0 ], [TESS_VERSION=$(tesseract --version 2>&1 | grep tesseract) && AC_MSG_NOTICE(tesseract library found... $TESS_VERSION)])
 AS_IF([ (test x$ocr = xtrue || test x$hardsubx = xtrue) && test ! $HAS_TESSERACT -gt 0 ], [AC_MSG_ERROR(tesserect library not found. Please install the tesseract library before proceeding)])
-AS_IF([ (test x$ocr = xtrue || test x$hardsubx = xtrue) && test $HAS_LEPT -gt 0 ], [LEPT_VERSION=`tesseract --version 2>&1 | grep leptonica` && AC_MSG_NOTICE(leptonica library found... $LEPT_VERSION)])
+AS_IF([ (test x$ocr = xtrue || test x$hardsubx = xtrue) && test $HAS_LEPT -gt 0 ], [LEPT_VERSION=$(tesseract --version 2>&1 | grep leptonica) && AC_MSG_NOTICE(leptonica library found... $LEPT_VERSION)])
 AS_IF([ (test x$ocr = xtrue || test x$hardsubx = xtrue) && test ! $HAS_LEPT -gt 0 ], [AC_MSG_ERROR(leptonica library not found. Please install the leptonica library before proceeding)])
 
 #AM_CONDITIONAL(s) for setting values to enable/disable flags in Makefile.am
 AM_CONDITIONAL(HARDSUBX_IS_ENABLED, [ test x$hardsubx = xtrue ])
 AM_CONDITIONAL(OCR_IS_ENABLED, [ test x$ocr = xtrue || test x$hardsubx = xtrue ])
 AM_CONDITIONAL(FFMPEG_IS_ENABLED, [ test x$ffmpeg = xtrue ])
-AM_CONDITIONAL(TESSERACT_PRESENT, [ test ! -z  `pkg-config --libs-only-l --silence-errors tesseract` ])
-AM_CONDITIONAL(TESSERACT_PRESENT_RPI, [ test -d "/usr/include/tesseract" && test `ls -A /usr/include/tesseract | wc -l` -gt 0 ])
-AM_CONDITIONAL(SYS_IS_LINUX, [ test `uname -s` = "Linux"])
-AM_CONDITIONAL(SYS_IS_MAC, [ test `uname -s` = "Darwin"])
-AM_CONDITIONAL(SYS_IS_APPLE_SILICON, [ test `uname -a | awk '{print $NF}'` = "arm64" ])
-AM_CONDITIONAL(SYS_IS_64_BIT,[test `getconf LONG_BIT` = "64"])
+AM_CONDITIONAL(TESSERACT_PRESENT, [ test ! -z  $(pkg-config --libs-only-l --silence-errors tesseract) ])
+AM_CONDITIONAL(TESSERACT_PRESENT_RPI, [ test -d "/usr/include/tesseract" && test $(ls -A /usr/include/tesseract | wc -l) -gt 0 ])
+AM_CONDITIONAL(SYS_IS_LINUX, [ test $(uname -s) = "Linux"])
+AM_CONDITIONAL(SYS_IS_MAC, [ test $(uname -s) = "Darwin"])
+AM_CONDITIONAL(SYS_IS_APPLE_SILICON, [ test $(uname -a | awk '{print $NF}') = "arm64" ])
+AM_CONDITIONAL(SYS_IS_64_BIT,[test $(getconf LONG_BIT) = "64"])
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

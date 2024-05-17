@@ -10,6 +10,12 @@ if(WIN32)
     add_definitions(-DWIN32)
 endif(WIN32)
 
+find_package(PkgConfig)
+pkg_check_modules (GPAC REQUIRED gpac)
+
+set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${GPAC_INCLUDE_DIRS})
+set (EXTRA_LIBS ${EXTRA_LIBS} ${GPAC_LIBRARIES})
+
 if (WITH_FFMPEG)
     find_package(PkgConfig)
 
@@ -55,7 +61,6 @@ if (WITH_SHARING)
 endif (WITH_SHARING)
 
 aux_source_directory ("${PROJECT_SOURCE_DIR}/lib_ccx/" SOURCEFILE)
-aux_source_directory ("${PROJECT_SOURCE_DIR}/gpacmp4/" SOURCEFILE)
 
 add_library (ccx ${SOURCEFILE} ccx_dtvcc.h ccx_dtvcc.c ccx_encoders_mcc.c ccx_encoders_mcc.h)
 target_link_libraries (ccx ${EXTRA_LIBS})
@@ -67,37 +72,27 @@ if (WITH_HARDSUBX)
     pkg_check_modules (AVFORMAT REQUIRED libavformat)
     pkg_check_modules (AVUTIL REQUIRED libavutil)
     pkg_check_modules (AVCODEC REQUIRED libavcodec)
+    pkg_check_modules (AVFILTER REQUIRED libavfilter)
     pkg_check_modules (SWSCALE REQUIRED libswscale)
 
     set (EXTRA_LIBS ${EXTRA_LIBS} ${AVFORMAT_LIBRARIES})
     set (EXTRA_LIBS ${EXTRA_LIBS} ${AVUTIL_LIBRARIES})
     set (EXTRA_LIBS ${EXTRA_LIBS} ${AVCODEC_LIBRARIES})
+    set (EXTRA_LIBS ${EXTRA_LIBS} ${AVFILTER_LIBRARIES})
     set (EXTRA_LIBS ${EXTRA_LIBS} ${SWSCALE_LIBRARIES})
 
     set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${AVFORMAT_INCLUDE_DIRS})
     set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${AVUTIL_INCLUDE_DIRS})
     set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${AVCODEC_INCLUDE_DIRS})
+    set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${AVFILTER_INCLUDE_DIRS})
     set (EXTRA_INCLUDES ${EXTRA_INCLUDES} ${SWSCALE_INCLUDE_DIRS})
 
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DENABLE_HARDSUBX")
 endif (WITH_HARDSUBX)
 
-if (MINGW OR CYGWIN)
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DGPAC_CONFIG_WIN32")
-endif (MINGW OR CYGWIN)
-
 if (WITHOUT_RUST)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DDISABLE_RUST")
 endif (WITHOUT_RUST)
-
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DGPAC_CONFIG_LINUX")
-endif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DGPAC_CONFIG_DARWIN")
-endif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-
 
 file (GLOB HeaderFiles *.h)
 file (WRITE ccx.pc "prefix=${CMAKE_INSTALL_PREFIX}\n"

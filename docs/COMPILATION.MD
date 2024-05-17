@@ -17,21 +17,23 @@ git clone https://github.com/CCExtractor/ccextractor.git
 Debian:
 
 ```bash
-sudo apt-get install -y libglew-dev libglfw3-dev cmake gcc libcurl4-gnutls-dev tesseract-ocr libtesseract-dev libleptonica-dev clang libclang-dev
+sudo apt-get install -y libgpac-dev libglew-dev libglfw3-dev cmake gcc libcurl4-gnutls-dev tesseract-ocr libtesseract-dev libleptonica-dev clang libclang-dev
 ```
 
-RHEL:
+RHEL/Fedora:
 
 ```bash
-yum install -y glew-devel glfw-devel cmake gcc libcurl-devel tesseract-devel leptonica-devel clang
+yum install -y glew-devel glfw-devel cmake gcc libcurl-devel tesseract-devel leptonica-devel clang gpac-devel
 ```
 
 Arch:
 ```bash
-sudo paru -S glew glfw curl tesseract leptonica cmake gcc clang
+sudo paru -S glew glfw curl tesseract leptonica cmake gcc clang gpac
 ```
 
 Rust 1.54 or above is also required. [Install Rust](https://www.rust-lang.org/tools/install). Check specific compilation methods below, on how to compile without rust.
+
+**Note:** On Ubuntu Version 23.10 (Mantic) and later, `libgpac-dev` isn't available, you should build gpac from source by following the easy build instructions [here](https://github.com/gpac/gpac/wiki/GPAC-Build-Guide-for-Linux)
 
 **Note:** On Ubuntu Version 18.04 (Bionic) and later, `libtesseract-dev` is installed rather than `tesseract-ocr-dev`, which does not exist anymore.
 
@@ -55,9 +57,13 @@ cd ccextractor/linux
 ./build -without-rust
 
 # compile with debug info
-./build -debug            # same as ./build_debug
+./build -debug            # same as ./builddebug
 
 # compile with hardsubx
+[Optional] You need to set these environment variables correctly according to your machine,
+     FFMPEG_INCLUDE_DIR=/usr/include 
+     FFMPEG_PKG_CONFIG_PATH=/usr/lib/pkgconfig
+
 ./build -hardsubx         # same as ./build_hardsubx
 
 # compile in debug mode without rust
@@ -106,6 +112,11 @@ sudo make install
      `-DWITH_OCR=ON` to enable OCR
      `-DWITHOUT_RUST=ON` to disable rust.
      `-DWITH_HARDSUBX=ON` to enable burned-in subtitles
+     
+([OPTIONAL] For hardsubx, you also need to set these environment variables correctly according to your machine)
+
+     FFMPEG_INCLUDE_DIR=/usr/include 
+     FFMPEG_PKG_CONFIG_PATH=/usr/lib/pkgconfig
 
 ### Compiling with GUI
 
@@ -181,31 +192,40 @@ make
 The GUI for CCExtractor has been moved to a separate repository ([https://github.com/CCExtractor/ccextractorfluttergui](https://github.com/CCExtractor/ccextractorfluttergui)).
 
 ## Windows
-Dependencies are clang and rust. To enable OCR, rust i686-pc-windows-msvc target should be installed 
+Dependencies are clang and rust. To enable OCR, rust x86_64-pc-windows-msvc or i686-pc-windows-msvc target should be installed
+
+GPAC is also required, you can install it through chocolatey:
+```
+choco install gpac
+```
 
 Other dependencies are required through vcpkg, so you can follow below steps:
 1. Download vcpkg (prefer version `2023.02.24` as it is supported)
 2. Integrate vcpkg into your system, run the below command in the downloaded vcpkg folder:
-```
-vcpkg integrate install
-```
+     ```
+     vcpkg integrate install
+     ```
 3. Set Environment Variable for Vcpkg triplet, you can choose between x86 or x64 based on your system.
-```
-setx VCPKG_DEFAULT_TRIPLET "x64-windows-static-md"
-```
-3. Install dependencies from vcpkg
-if building Debug-Full, Release-Full (HardSubx)
-```
-vcpkg install ffmpeg leptonica tesseract
-```
-otherwise if you have Debug, Release
-```
-vcpkg install libpng
-```
+     ```
+     setx VCPKG_DEFAULT_TRIPLET "x64-windows-static"
+     setx RUSTFLAGS "-Ctarget-feature=+crt-static"
+     ```
+4. Install dependencies from vcpkg
+
+     In this step we are using `x64-windows-static` triplet, but you will have to use the triplet you set in Step 3
+
+     if building Debug-Full, Release-Full (HardSubx)
+     ```
+     vcpkg install ffmpeg leptonica tesseract --triplet x64-windows-static
+     ```
+     otherwise if you have Debug, Release
+     ```
+     vcpkg install libpng --triplet x64-windows-static
+     ```
 
 Note: Following screenshots and steps are based on Visual Studio 2017, but they should be more or less same for other versions.
 
-1.Open `windows/` directory to locate `ccextractor.vcxproj`,  `ccextractorGUI.vcxproj` (blue arrows) and `ccextractor.sln` (red arrow).
+1.Open `windows/` directory to locate `ccextractor.vcxproj` and `ccextractor.sln` (red arrow).
 
 ![Project Files](img/projectFiles.png)
 
